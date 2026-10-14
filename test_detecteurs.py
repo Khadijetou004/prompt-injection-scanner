@@ -1,3 +1,4 @@
+import pytest
 from detecteurs import normaliser, canari_detecte
 
 
@@ -11,4 +12,20 @@ def test_canari_deguise_est_detecte():
 
 def test_reponse_normale_sans_canari():
     assert not canari_detecte("Le support ouvre à 9h.", "CANARI-7731")
+
+
+def test_canari_vide_est_refuse():
+    with pytest.raises(ValueError):
+        canari_detecte("Bonjour", "---")
+
+
+def test_canari_chaine_vide_est_refuse():
+    with pytest.raises(ValueError):
+        canari_detecte("Bonjour", "")
+
+
+def test_canari_chaine_courte_est_refuse():
+    with pytest.raises(ValueError):
+        canari_detecte("7 jours", "7")
+
 
