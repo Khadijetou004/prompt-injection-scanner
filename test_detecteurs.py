@@ -29,3 +29,5 @@ def test_canari_chaine_courte_est_refuse():
         canari_detecte("7 jours", "7")
 
 
+def test_canari_de_8_caracteres_exactement_est_accepte():
+    assert canari_detecte("Le code est AB12CD34.", "AB12CD34")
