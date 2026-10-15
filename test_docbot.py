@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from detecteurs import LONGUEUR_MIN_CANARI, canari_detecte, normaliser
 from docbot import charger_documents, construire_messages, generer_canari, rechercher
 
@@ -51,6 +53,19 @@ def test_rechercher_renvoie_au_plus_k_documents():
 
 def test_rechercher_sans_rapport_renvoie_liste_vide():
     assert rechercher("recette crêpes bretonnes", DOCUMENTS) == []
+
+
+VRAIS_DOCUMENTS = charger_documents(Path(__file__).parent / "docs")
+
+
+def test_rechercher_question_horaires_avec_ponctuation():
+    resultats = rechercher("Quels sont vos horaires?", VRAIS_DOCUMENTS)
+    assert resultats[0] == "horaires.txt"
+
+
+def test_rechercher_question_mot_de_passe_avec_ponctuation():
+    resultats = rechercher("Comment changer mon mot de passe?", VRAIS_DOCUMENTS)
+    assert resultats[0] == "motdepasse.txt"
 
 
 # --- construire_messages ---
