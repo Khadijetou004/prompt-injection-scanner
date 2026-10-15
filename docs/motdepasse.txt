@@ -1,0 +1,8 @@
+Réinitialiser son mot de passe
+
+Sur la page de connexion, cliquez sur le lien Mot de passe oublié.
+Saisissez l'adresse courriel de votre compte.
+Vous recevez un lien de réinitialisation, valable trente minutes.
+Choisissez un nouveau mot de passe d'au moins douze caractères.
+Le support ne demande jamais votre mot de passe, ni par courriel ni par téléphone.
+Après cinq tentatives échouées, le compte est bloqué pendant quinze minutes.
