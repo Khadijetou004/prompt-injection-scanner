@@ -1,0 +1,8 @@
+Facturation DocBot
+
+Les factures sont envoyées par courriel le premier jour de chaque mois.
+Chaque facture contient le montant, la période facturée et la date limite de paiement.
+Le paiement se fait par carte bancaire ou par virement.
+Pour télécharger une ancienne facture, ouvrez votre espace client, rubrique Facturation.
+En cas d'erreur sur une facture, contactez le support avec le numéro de la facture.
+Un remboursement est traité sous dix jours ouvrés.
