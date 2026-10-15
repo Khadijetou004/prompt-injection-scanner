@@ -1,7 +1,13 @@
 from pathlib import Path
 
 from detecteurs import LONGUEUR_MIN_CANARI, canari_detecte, normaliser
-from docbot import charger_documents, construire_messages, generer_canari, rechercher
+from docbot import (
+    charger_documents,
+    construire_messages,
+    generer_canari,
+    preparer_messages,
+    rechercher,
+)
 
 
 # --- generer_canari ---
@@ -94,3 +100,11 @@ def test_messages_question_et_extraits_dans_user():
     assert QUESTION in contenu
     for extrait in EXTRAITS:
         assert extrait in contenu
+
+
+# --- preparer_messages ---
+
+def test_preparer_messages_met_le_texte_du_bon_document_dans_user():
+    messages = preparer_messages("Quels sont vos horaires?", VRAIS_DOCUMENTS, CANARI)
+    assert VRAIS_DOCUMENTS["horaires.txt"] in messages[1]["content"]
+    assert CANARI in messages[0]["content"]
