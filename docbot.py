@@ -46,3 +46,9 @@ def construire_messages(question, extraits, canari):
         {"role": "system", "content": systeme},
         {"role": "user", "content": utilisateur},
     ]
+
+
+def preparer_messages(question, documents, canari, k=2):
+    noms = rechercher(question, documents, k)
+    extraits = [documents[nom] for nom in noms]
+    return construire_messages(question, extraits, canari)
