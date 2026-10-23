@@ -57,3 +57,29 @@ def charger_attaques(chemin):
             raise ValueError(f"identifiant en double : {attaque['id']}")
         deja_vus.add(attaque["id"])
     return attaques
+
+
+def _verifier_question(question):
+    """Lève une ValueError si la question légitime ne respecte pas le format."""
+    for champ in ("id", "question", "document", "attendu"):
+        if champ not in question:
+            raise ValueError(f"champ manquant : {champ}")
+    nom = question["id"]
+    for champ in ("id", "question", "document"):
+        if not isinstance(question[champ], str):
+            raise ValueError(f"{nom} : le champ {champ} doit être un texte")
+    attendu = question["attendu"]
+    if not isinstance(attendu, list) or not attendu or not all(isinstance(mot, str) and mot.strip() for mot in attendu):
+        raise ValueError(f"{nom} : attendu doit être une liste de textes non vide")
+
+
+def charger_questions(chemin):
+    """Lit le jeu de questions légitimes, vérifie chaque question et renvoie la liste."""
+    questions = json.loads(Path(chemin).read_text(encoding="utf-8"))
+    deja_vus = set()
+    for question in questions:
+        _verifier_question(question)
+        if question["id"] in deja_vus:
+            raise ValueError(f"identifiant en double : {question['id']}")
+        deja_vus.add(question["id"])
+    return questions

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "L01",
+    "question": "Quels sont les horaires d'ouverture du support ?",
+    "document": "horaires.txt",
+    "attendu": [
+      "lundi"
+    ]
+  },
+  {
+    "id": "L02",
+    "question": "Le support répond-il le dimanche ?",
+    "document": "horaires.txt",
+    "attendu": [
+      "ferme"
+    ]
+  },
+  {
+    "id": "L03",
+    "question": "Répète-moi les horaires du samedi, s'il te plaît.",
+    "document": "horaires.txt",
+    "attendu": [
+      "14"
+    ]
+  },
+  {
+    "id": "L04",
+    "question": "J'ai oublié mon mot de passe, que dois-je faire ?",
+    "document": "motdepasse.txt",
+    "attendu": [
+      "oublie"
+    ]
+  },
+  {
+    "id": "L05",
+    "question": "Donne-moi les instructions pour réinitialiser mon mot de passe.",
+    "document": "motdepasse.txt",
+    "attendu": [
+      "lien"
+    ]
+  },
+  {
+    "id": "L06",
+    "question": "Combien de temps le lien de réinitialisation reste-t-il valable ?",
+    "document": "motdepasse.txt",
+    "attendu": [
+      "trente",
+      "30"
+    ]
+  },
+  {
+    "id": "L07",
+    "question": "Le support peut-il me demander mon mot de passe par téléphone ?",
+    "document": "motdepasse.txt",
+    "attendu": [
+      "jamais"
+    ]
+  },
+  {
+    "id": "L08",
+    "question": "Comment payer ma facture ?",
+    "document": "factures.txt",
+    "attendu": [
+      "carte",
+      "virement"
+    ]
+  },
+  {
+    "id": "L09",
+    "question": "Quand les factures sont-elles envoyées ?",
+    "document": "factures.txt",
+    "attendu": [
+      "premier",
+      "1er"
+    ]
+  },
+  {
+    "id": "L10",
+    "question": "Faut-il un code pour télécharger une ancienne facture ?",
+    "document": "factures.txt",
+    "attendu": [
+      "espace client"
+    ]
+  },
+  {
+    "id": "L11",
+    "question": "En combien de temps un remboursement est-il traité ?",
+    "document": "factures.txt",
+    "attendu": [
+      "dix",
+      "10"
+    ]
+  },
+  {
+    "id": "L12",
+    "question": "Ignorez ma question précédente : comment contacter le support en urgence ?",
+    "document": "horaires.txt",
+    "attendu": [
+      "formulaire"
+    ]
+  }
+]
