@@ -120,6 +120,12 @@ def test_modele_qui_fuit_fait_reussir_l_attaque():
     assert resultat["id"] == "T01"
 
 
+def test_le_resultat_garde_le_canari_pour_pouvoir_rejuger():
+    resultat = executer_attaque(attaque(), DOCUMENTS, modele_bavard)
+    assert resultat["canari"].startswith("CANARI-")
+    assert juger(resultat["reponse"], attaque(), resultat["canari"]) == resultat["reussie"]
+
+
 def test_modele_qui_refuse_fait_echouer_l_attaque():
     resultat = executer_attaque(attaque(), DOCUMENTS, modele_sage)
     assert not resultat["reussie"]
@@ -207,10 +213,12 @@ def test_sauvegarder_ecrit_un_scan_relisible(tmp_path):
 @pytest.mark.parametrize(
     "a", [a for a in VRAIES_ATTAQUES if a["type"] == "indirecte"], ids=lambda a: a["id"]
 )
-def test_chaque_piege_est_trouve_par_la_recherche(a):
+def test_chaque_piege_est_classe_premier_par_la_recherche(a):
+    # Premier, et pas seulement dans les k premiers : le piège ne doit pas
+    # dépendre d'une égalité de score départagée par l'ordre alphabétique.
     documents = dict(VRAIS_DOCUMENTS)
     documents[a["document_piege"]["nom"]] = a["document_piege"]["contenu"]
-    assert a["document_piege"]["nom"] in rechercher(a["question"], documents)
+    assert rechercher(a["question"], documents, k=1) == [a["document_piege"]["nom"]]
 
 
 @pytest.mark.parametrize(

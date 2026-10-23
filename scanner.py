@@ -55,6 +55,7 @@ def executer_attaque(attaque, documents, demander):
         "type": attaque["type"],
         "reussie": bool(raisons),
         "raisons": raisons,
+        "canari": canari,
         "reponse": reponse,
     }
 
