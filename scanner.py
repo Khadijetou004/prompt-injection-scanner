@@ -1,3 +1,5 @@
+import json
+from datetime import datetime
 from pathlib import Path
 
 from corpus import charger_attaques
@@ -57,9 +59,22 @@ def executer_attaque(attaque, documents, demander):
     }
 
 
-def scanner(attaques, documents, demander):
-    """Exécute toutes les attaques et renvoie la liste des résultats."""
-    return [executer_attaque(attaque, documents, demander) for attaque in attaques]
+def scanner(attaques, documents, demander, repetitions=1, progression=None):
+    """Exécute chaque attaque `repetitions` fois et renvoie tous les résultats.
+
+    `progression`, si elle est donnée, est appelée avant chaque essai avec
+    (numéro de l'essai en cours, nombre total d'essais, attaque, essai).
+    """
+    resultats = []
+    total = repetitions * len(attaques)
+    for essai in range(1, repetitions + 1):
+        for attaque in attaques:
+            if progression:
+                progression(len(resultats) + 1, total, attaque, essai)
+            resultat = executer_attaque(attaque, documents, demander)
+            resultat["essai"] = essai
+            resultats.append(resultat)
+    return resultats
 
 
 def taux_de_reussite(resultats):
@@ -78,10 +93,36 @@ def taux_par_categorie(resultats):
     }
 
 
+def taux_par_attaque(resultats):
+    """Taux de réussite de chaque attaque sur ses essais, dans l'ordre du corpus."""
+    ids = list(dict.fromkeys(r["id"] for r in resultats))
+    return {id: taux_de_reussite([r for r in resultats if r["id"] == id]) for id in ids}
+
+
+def sauvegarder(resultats, chemin, modele, repetitions):
+    """Écrit le scan complet en JSON, réponses du modèle comprises."""
+    chemin = Path(chemin)
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    scan = {
+        "date": datetime.now().isoformat(timespec="seconds"),
+        "modele": modele,
+        "repetitions": repetitions,
+        "taux_global": taux_de_reussite(resultats),
+        "taux_par_categorie": taux_par_categorie(resultats),
+        "taux_par_attaque": taux_par_attaque(resultats),
+        "resultats": resultats,
+    }
+    chemin.write_text(json.dumps(scan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def afficher_rapport(resultats):
-    for r in resultats:
-        etat = f"RÉUSSIE  ({' + '.join(r['raisons'])})" if r["reussie"] else "échouée"
-        print(f"{r['id']:<5} {r['categorie']:<6} {r['type']:<10} {etat}")
+    for id, taux in taux_par_attaque(resultats).items():
+        essais = [r for r in resultats if r["id"] == id]
+        reussis = sum(r["reussie"] for r in essais)
+        raisons = sorted({raison for r in essais for raison in r["raisons"]})
+        detail = f"  ({' + '.join(raisons)})" if raisons else ""
+        print(f"{id:<5} {essais[0]['categorie']:<6} {essais[0]['type']:<10} "
+              f"{reussis}/{len(essais)}{detail}")
     print()
     for categorie, taux in taux_par_categorie(resultats).items():
         print(f"{categorie} : {taux:.0%}")
@@ -89,9 +130,26 @@ def afficher_rapport(resultats):
 
 
 if __name__ == "__main__":
-    from modele import demander
+    import argparse
+
+    from modele import MODELE, demander
+
+    parser = argparse.ArgumentParser(description="Lance le corpus d'attaques contre DocBot.")
+    parser.add_argument("--repetitions", type=int, default=1,
+                        help="nombre d'essais par attaque (défaut : 1)")
+    parser.add_argument("--sortie", help="fichier JSON du scan (défaut : resultats/<date>.json)")
+    args = parser.parse_args()
 
     dossier = Path(__file__).parent
     attaques = charger_attaques(dossier / "attaques.json")
     documents = charger_documents(dossier / "docs")
-    afficher_rapport(scanner(attaques, documents, demander))
+    def afficher_progression(numero, total, attaque, essai):
+        print(f"[{numero}/{total}] {attaque['id']} essai {essai}", flush=True)
+
+    resultats = scanner(attaques, documents, demander, args.repetitions, afficher_progression)
+    print()
+    afficher_rapport(resultats)
+
+    sortie = args.sortie or dossier / "resultats" / f"{datetime.now():%Y-%m-%d_%H%M%S}.json"
+    sauvegarder(resultats, sortie, MODELE, args.repetitions)
+    print(f"Scan enregistré dans {sortie}")

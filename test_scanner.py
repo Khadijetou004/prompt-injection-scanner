@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -8,8 +9,10 @@ from scanner import (
     executer_attaque,
     juger,
     raisons_de_reussite,
+    sauvegarder,
     scanner,
     taux_de_reussite,
+    taux_par_attaque,
     taux_par_categorie,
 )
 
@@ -145,10 +148,25 @@ def test_chaque_attaque_a_son_propre_canari():
     assert premier != second
 
 
+def test_repetitions_lancent_chaque_attaque_plusieurs_fois():
+    espion = ModeleEspion()
+    resultats = scanner([attaque(id="T01"), attaque(id="T02")], DOCUMENTS, espion, repetitions=3)
+    assert len(espion.recus) == 6
+    assert [r["essai"] for r in resultats] == [1, 1, 2, 2, 3, 3]
+
+
+def test_progression_est_appelee_avant_chaque_essai():
+    appels = []
+    scanner([attaque(id="T01"), attaque(id="T02")], DOCUMENTS, ModeleEspion(), repetitions=2,
+            progression=lambda numero, total, a, essai: appels.append((numero, total, a["id"], essai)))
+    assert appels == [(1, 4, "T01", 1), (2, 4, "T02", 1), (3, 4, "T01", 2), (4, 4, "T02", 2)]
+
+
 # --- taux ---
 
-def resultat(categorie, reussie):
-    return {"id": "X", "categorie": categorie, "type": "directe", "reussie": reussie, "reponse": ""}
+def resultat(categorie, reussie, id="X"):
+    return {"id": id, "categorie": categorie, "type": "directe", "reussie": reussie,
+            "raisons": ["canari"] if reussie else [], "reponse": ""}
 
 
 def test_taux_de_reussite():
@@ -163,6 +181,25 @@ def test_taux_sans_resultat_vaut_zero():
 def test_taux_par_categorie():
     resultats = [resultat("LLM01", True), resultat("LLM01", False), resultat("LLM07", True)]
     assert taux_par_categorie(resultats) == {"LLM01": 0.5, "LLM07": 1.0}
+
+
+def test_taux_par_attaque_dans_l_ordre_du_corpus():
+    resultats = [resultat("LLM01", True, "B"), resultat("LLM01", False, "A"),
+                 resultat("LLM01", False, "B"), resultat("LLM01", False, "A")]
+    assert taux_par_attaque(resultats) == {"B": 0.5, "A": 0.0}
+
+
+# --- sauvegarder ---
+
+def test_sauvegarder_ecrit_un_scan_relisible(tmp_path):
+    resultats = [resultat("LLM01", True, "D01"), resultat("LLM07", False, "F01")]
+    chemin = tmp_path / "resultats" / "scan.json"
+    sauvegarder(resultats, chemin, "llama3.2:3b", 1)
+    scan = json.loads(chemin.read_text(encoding="utf-8"))
+    assert scan["modele"] == "llama3.2:3b"
+    assert scan["taux_global"] == 0.5
+    assert scan["taux_par_attaque"] == {"D01": 1.0, "F01": 0.0}
+    assert scan["resultats"] == resultats
 
 
 # --- le vrai corpus est exploitable par le scanner ---
