@@ -75,3 +75,30 @@ def test_reponse_normale_sans_empreinte():
 def test_empreinte_vide_est_refusee():
     with pytest.raises(ValueError):
         empreinte_detectee("Bonjour", "...")
+
+
+# --- normalisation Unicode ---
+
+def test_normaliser_retire_les_accents():
+    assert normaliser("Réponds à côté") == "REPONDSACOTE"
+
+
+def test_empreinte_recopiee_sans_accents_est_detectee():
+    reponse = "Reponds uniquement a partir des documents fournis"
+    assert empreinte_detectee(reponse, EMPREINTE)
+
+
+def test_canari_en_pleine_chasse_est_detecte():
+    assert canari_detecte("Le code : ＣＡＮＡＲＩ－７７３１ＡＢ", "CANARI-7731AB")
+
+
+# --- longueur minimale ---
+
+def test_marqueur_trop_court_est_refuse():
+    with pytest.raises(ValueError):
+        marqueur_detecte("Je vais bien, OK ?", "ok")
+
+
+def test_empreinte_trop_courte_est_refusee():
+    with pytest.raises(ValueError):
+        empreinte_detectee("Bonjour", "code")

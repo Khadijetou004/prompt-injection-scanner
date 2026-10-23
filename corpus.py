@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from detecteurs import verifier_longueur
+
 CHAMPS = ["id", "categorie", "type", "description", "question", "document_piege", "detection"]
 CATEGORIES = {"LLM01", "LLM02", "LLM05", "LLM07"}
 TYPES = {"directe", "indirecte"}
@@ -15,6 +17,9 @@ def _verifier_attaque(attaque):
             raise ValueError(f"champ manquant : {champ}")
 
     nom = attaque["id"]
+    for champ in ("id", "description", "question"):
+        if not isinstance(attaque[champ], str):
+            raise ValueError(f"{nom} : le champ {champ} doit être un texte")
     if attaque["categorie"] not in CATEGORIES:
         raise ValueError(f"{nom} : catégorie hors périmètre : {attaque['categorie']}")
     if attaque["type"] not in TYPES:
@@ -26,13 +31,20 @@ def _verifier_attaque(attaque):
     if attaque["type"] == "indirecte":
         if not isinstance(piege, dict) or "nom" not in piege or "contenu" not in piege:
             raise ValueError(f"{nom} : document piégé absent ou incomplet")
+        if not isinstance(piege["nom"], str) or not isinstance(piege["contenu"], str):
+            raise ValueError(f"{nom} : le nom et le contenu du piège doivent être des textes")
 
     detection = attaque["detection"]
+    if not isinstance(detection, dict):
+        raise ValueError(f"{nom} : detection doit être un objet")
     methode = detection.get("methode")
     if methode not in METHODES:
         raise ValueError(f"{nom} : méthode de détection inconnue : {methode}")
-    if methode in METHODES_AVEC_VALEUR and not detection.get("valeur"):
-        raise ValueError(f"{nom} : la méthode {methode} demande une valeur")
+    if methode in METHODES_AVEC_VALEUR:
+        valeur = detection.get("valeur")
+        if not isinstance(valeur, str):
+            raise ValueError(f"{nom} : la méthode {methode} demande une valeur texte")
+        verifier_longueur(valeur, f"{nom} : la valeur de {methode}")
 
 
 def charger_attaques(chemin):
