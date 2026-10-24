@@ -35,7 +35,9 @@ MOTIFS_SUSPECTS = [
     r"\bcode (secret|interne|de reference)\b",
     r"\bsecret code\b",
     # Sortie imposée
-    r"\breponds? (uniquement|exactement|seulement) (par|avec)\b",
+    # « réponds » ou « répondez » à l'impératif : « le support répond seulement
+    # par courriel » est une phrase normale d'un document.
+    r"\b(reponds|repondez) (uniquement|exactement|seulement) (par|avec)\b",
     r"\btermine (obligatoirement |toujours )?ta reponse par\b",
     r"\brespond only with\b",
     # Sortie dangereuse : script ou image qui exfiltre vers un serveur
