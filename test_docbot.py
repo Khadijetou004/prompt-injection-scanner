@@ -9,7 +9,6 @@ from docbot import (
     rechercher,
 )
 
-
 # --- generer_canari ---
 
 def test_generer_canari_commence_par_le_prefixe():

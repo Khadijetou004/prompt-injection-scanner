@@ -1,3 +1,4 @@
+import argparse
 import json
 import re
 from datetime import datetime
@@ -101,7 +102,7 @@ def juger_legitime(reponse, bloquee_par, question):
 
 
 def rejuger_legitimes(legitimes, questions):
-    """Recalcule les notes d'un scan enregistré, par exemple après une correction des mots attendus."""
+    """Recalcule les notes d'un scan enregistré, par exemple après correction des mots attendus."""
     par_id = {q["id"]: q for q in questions}
     return [{**r, **juger_legitime(r["reponse"], r["bloquee_par"], par_id[r["id"]])}
             for r in legitimes]
@@ -181,7 +182,8 @@ def comparer(reference, resultats):
 
     return {
         "global": (reference.get("taux_global"), taux_de_reussite(resultats)),
-        "categories": paires(reference.get("taux_par_categorie", {}), taux_par_categorie(resultats)),
+        "categories": paires(reference.get("taux_par_categorie", {}),
+                             taux_par_categorie(resultats)),
         "attaques": paires(reference.get("taux_par_attaque", {}), taux_par_attaque(resultats)),
     }
 
@@ -209,7 +211,7 @@ def sauvegarder(resultats, chemin, modele, repetitions, defenses=(), legitimes=N
 
 
 def afficher_rapport(resultats):
-    for id, taux in taux_par_attaque(resultats).items():
+    for id in taux_par_attaque(resultats):
         essais = [r for r in resultats if r["id"] == id]
         reussis = sum(r["reussie"] for r in essais)
         raisons = sorted({raison for r in essais for raison in r["raisons"]})
@@ -253,11 +255,12 @@ def afficher_comparaison(comparaison):
     print(f"{'Global':<6} {taux(avant)}  {taux(apres)}")
 
 
-if __name__ == "__main__":
-    import argparse
+def nom_fichier_scan(defenses, date):
+    """Nom du fichier de scan par défaut, par exemple 2026-10-24_191720_regex.json."""
+    return f"{date:%Y-%m-%d_%H%M%S}_{'+'.join(defenses) or 'sans_defense'}.json"
 
-    from modele import MODELE, demander
 
+def analyser_arguments(argv=None):
     parser = argparse.ArgumentParser(description="Lance le corpus d'attaques contre DocBot.")
     parser.add_argument("--repetitions", type=int, default=1,
                         help="nombre d'essais par attaque (défaut : 1)")
@@ -267,13 +270,28 @@ if __name__ == "__main__":
                         help="défenses à activer, combinables (défaut : aucune)")
     parser.add_argument("--reference", default="resultats/2026-10-23_sans_defense.json",
                         help="scan sans défense auquel comparer (défaut : %(default)s)")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.repetitions < 1:
+        parser.error("--repetitions doit valoir au moins 1")
+    return args
+
+
+def main(argv=None, demander=None, nom_modele=None):
+    """Lance un scan complet et renvoie le chemin du fichier enregistré.
+
+    `demander` et `nom_modele` remplacent Ollama dans les tests.
+    """
+    args = analyser_arguments(argv)
+    if demander is None:
+        import modele
+        demander, nom_modele = modele.demander, modele.MODELE
     defenses = DEFENSES if "toutes" in args.defense else tuple(dict.fromkeys(args.defense))
 
     dossier = Path(__file__).parent
     attaques = charger_attaques(dossier / "attaques.json")
     questions = charger_questions(dossier / "questions_legitimes.json")
     documents = charger_documents(dossier / "docs")
+
     def afficher_progression(numero, total, element, essai):
         print(f"[{numero}/{total}] {element['id']} essai {essai}", flush=True)
 
@@ -296,7 +314,11 @@ if __name__ == "__main__":
     else:
         print(f"Pas de comparaison : {args.reference} est introuvable.")
 
-    nom = "+".join(defenses) or "sans_defense"
-    sortie = args.sortie or dossier / "resultats" / f"{datetime.now():%Y-%m-%d_%H%M%S}_{nom}.json"
-    sauvegarder(resultats, sortie, MODELE, args.repetitions, defenses, legitimes)
+    sortie = args.sortie or dossier / "resultats" / nom_fichier_scan(defenses, datetime.now())
+    sauvegarder(resultats, sortie, nom_modele, args.repetitions, defenses, legitimes)
     print(f"Scan enregistré dans {sortie}")
+    return sortie
+
+
+if __name__ == "__main__":
+    main()

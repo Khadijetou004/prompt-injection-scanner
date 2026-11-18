@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -6,10 +7,13 @@ import pytest
 from corpus import charger_attaques
 from docbot import charger_documents, construire_messages, rechercher
 from scanner import (
+    analyser_arguments,
     comparer,
     evaluer_legitimes,
     executer_attaque,
     juger,
+    main,
+    nom_fichier_scan,
     raisons_de_reussite,
     refus_du_modele,
     rejuger_legitimes,
@@ -172,7 +176,7 @@ def test_repetitions_lancent_chaque_attaque_plusieurs_fois():
 def test_progression_est_appelee_avant_chaque_essai():
     appels = []
     scanner([attaque(id="T01"), attaque(id="T02")], DOCUMENTS, ModeleEspion(), repetitions=2,
-            progression=lambda numero, total, a, essai: appels.append((numero, total, a["id"], essai)))
+            progression=lambda n, total, a, essai: appels.append((n, total, a["id"], essai)))
     assert appels == [(1, 4, "T01", 1), (2, 4, "T02", 1), (3, 4, "T01", 2), (4, 4, "T02", 2)]
 
 
@@ -366,3 +370,49 @@ def test_sauvegarder_avec_defenses_et_questions_legitimes(tmp_path):
     assert scan["taux_reponses_utiles"] == 0.5
     assert scan["taux_refus_modele"] == 0.0
     assert scan["legitimes"] == legitimes
+
+
+# --- ligne de commande ---
+
+def test_nom_fichier_scan():
+    date = datetime(2026, 10, 24, 19, 17, 20)
+    assert nom_fichier_scan((), date) == "2026-10-24_191720_sans_defense.json"
+    assert nom_fichier_scan(("regex", "garde"), date) == "2026-10-24_191720_regex+garde.json"
+
+
+def test_repetitions_nulles_sont_refusees():
+    with pytest.raises(SystemExit):
+        analyser_arguments(["--repetitions", "0"])
+
+
+def test_defense_inconnue_est_refusee():
+    with pytest.raises(SystemExit):
+        analyser_arguments(["--defense", "magie"])
+
+
+def test_main_enregistre_un_scan_complet(tmp_path, capsys):
+    sortie = tmp_path / "scan.json"
+    main(["--defense", "toutes", "--sortie", str(sortie)], modele_bavard, "faux-modele")
+    scan = json.loads(sortie.read_text(encoding="utf-8"))
+    assert scan["modele"] == "faux-modele"
+    assert scan["defenses"] == ["regex", "spotlighting", "sandwich", "garde"]
+    assert len(scan["resultats"]) == len(VRAIES_ATTAQUES)
+    assert len(scan["legitimes"]) == 12
+    # Le modèle bavard recopie tout son prompt : la garde doit bloquer chaque réponse.
+    assert scan["taux_global"] == 0.0
+    sortie_console = capsys.readouterr().out
+    assert "Comparaison avec resultats/2026-10-23_sans_defense.json" in sortie_console
+    assert f"Scan enregistré dans {sortie}" in sortie_console
+
+
+def test_main_sans_reference_le_signale(tmp_path, capsys):
+    main(["--sortie", str(tmp_path / "scan.json"), "--reference", "absent.json"],
+         modele_sage, "faux-modele")
+    assert "Pas de comparaison : absent.json est introuvable." in capsys.readouterr().out
+
+
+def test_main_dedoublonne_les_defenses(tmp_path):
+    sortie = tmp_path / "scan.json"
+    main(["--defense", "garde", "garde", "--sortie", str(sortie)], modele_sage, "faux-modele")
+    assert json.loads(sortie.read_text(encoding="utf-8"))["defenses"] == ["garde"]
+

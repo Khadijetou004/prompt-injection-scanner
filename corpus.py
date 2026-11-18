@@ -69,7 +69,8 @@ def _verifier_question(question):
         if not isinstance(question[champ], str):
             raise ValueError(f"{nom} : le champ {champ} doit être un texte")
     attendu = question["attendu"]
-    if not isinstance(attendu, list) or not attendu or not all(isinstance(mot, str) and mot.strip() for mot in attendu):
+    mots_valides = all(isinstance(mot, str) and mot.strip() for mot in attendu or [])
+    if not isinstance(attendu, list) or not attendu or not mots_valides:
         raise ValueError(f"{nom} : attendu doit être une liste de textes non vide")
 
 

@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# Erreurs, avertissements, ordre des imports et bugs probables.
+select = ["E", "F", "W", "I", "B"]
+
+[tool.coverage.run]
+omit = ["test_*.py", "premier_appel.py", ".venv/*"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
