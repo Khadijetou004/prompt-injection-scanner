@@ -1,4 +1,5 @@
 import pytest
+
 from detecteurs import canari_detecte, empreinte_detectee, marqueur_detecte, normaliser
 
 

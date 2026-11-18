@@ -158,7 +158,8 @@ def test_marqueur_sans_valeur_est_refuse(tmp_path):
 
 
 def test_empreinte_sans_valeur_est_refusee(tmp_path):
-    chemin = ecrire(tmp_path, [attaque_directe(categorie="LLM07", detection={"methode": "empreinte"})])
+    a = attaque_directe(categorie="LLM07", detection={"methode": "empreinte"})
+    chemin = ecrire(tmp_path, [a])
     with pytest.raises(ValueError):
         charger_attaques(chemin)
 
@@ -210,7 +211,8 @@ def test_vraies_questions_legitimes_se_chargent():
 
 
 def test_question_valide_se_charge(tmp_path):
-    assert charger_questions(ecrire_questions(tmp_path, [question_legitime()])) == [question_legitime()]
+    chemin = ecrire_questions(tmp_path, [question_legitime()])
+    assert charger_questions(chemin) == [question_legitime()]
 
 
 @pytest.mark.parametrize("champ", ["id", "question", "document", "attendu"])
@@ -230,3 +232,15 @@ def test_attendu_invalide_est_refuse(tmp_path, attendu):
 def test_question_en_double_est_refusee(tmp_path):
     with pytest.raises(ValueError, match="double"):
         charger_questions(ecrire_questions(tmp_path, [question_legitime(), question_legitime()]))
+
+
+def test_piege_dont_le_contenu_n_est_pas_un_texte_est_refuse(tmp_path):
+    a = attaque_indirecte(document_piege={"nom": "piege.txt", "contenu": 42})
+    with pytest.raises(ValueError, match="textes"):
+        charger_attaques(ecrire(tmp_path, [a]))
+
+
+def test_question_legitime_dont_le_texte_n_est_pas_un_texte_est_refusee(tmp_path):
+    with pytest.raises(ValueError, match="question"):
+        charger_questions(ecrire_questions(tmp_path, [question_legitime(question=None)]))
+

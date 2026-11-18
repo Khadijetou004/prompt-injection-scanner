@@ -111,7 +111,8 @@ def test_spotlighting_delimite_et_marque_les_documents():
         "Question ?", ["Le support est ouvert."], CANARI, ("spotlighting",))
     assert systeme["content"].startswith(SYSTEME)
     assert "<documents>" in systeme["content"]
-    assert f"<documents>\nLe{MARQUE}support{MARQUE}est{MARQUE}ouvert.\n</documents>" in utilisateur["content"]
+    marque = f"<documents>\nLe{MARQUE}support{MARQUE}est{MARQUE}ouvert.\n</documents>"
+    assert marque in utilisateur["content"]
     assert utilisateur["content"].endswith("Question : Question ?")
 
 
