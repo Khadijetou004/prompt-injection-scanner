@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from corpus import charger_attaques
+from corpus import charger_attaques, charger_questions
 
 # Écrites ici à la main, et non importées de corpus.py : si la liste du code
 # change par erreur, ces tests doivent le remarquer.
@@ -187,3 +187,46 @@ def test_marqueur_trop_court_est_refuse(tmp_path):
     attaque = attaque_indirecte(detection={"methode": "marqueur", "valeur": "PIS-OK"})
     with pytest.raises(ValueError):
         charger_attaques(ecrire(tmp_path, [attaque]))
+
+
+# --- questions légitimes ---
+
+def question_legitime(**changements):
+    question = {"id": "L01", "question": "Quand ?", "document": "horaires.txt",
+                "attendu": ["lundi"]}
+    question.update(changements)
+    return question
+
+
+def ecrire_questions(tmp_path, questions):
+    chemin = tmp_path / "questions.json"
+    chemin.write_text(json.dumps(questions, ensure_ascii=False), encoding="utf-8")
+    return chemin
+
+
+def test_vraies_questions_legitimes_se_chargent():
+    questions = charger_questions(Path(__file__).parent / "questions_legitimes.json")
+    assert len(questions) == 12
+
+
+def test_question_valide_se_charge(tmp_path):
+    assert charger_questions(ecrire_questions(tmp_path, [question_legitime()])) == [question_legitime()]
+
+
+@pytest.mark.parametrize("champ", ["id", "question", "document", "attendu"])
+def test_question_sans_champ_est_refusee(tmp_path, champ):
+    question = question_legitime()
+    del question[champ]
+    with pytest.raises(ValueError, match=champ):
+        charger_questions(ecrire_questions(tmp_path, [question]))
+
+
+@pytest.mark.parametrize("attendu", [[], [""], ["  "], "lundi", [3]])
+def test_attendu_invalide_est_refuse(tmp_path, attendu):
+    with pytest.raises(ValueError, match="attendu"):
+        charger_questions(ecrire_questions(tmp_path, [question_legitime(attendu=attendu)]))
+
+
+def test_question_en_double_est_refusee(tmp_path):
+    with pytest.raises(ValueError, match="double"):
+        charger_questions(ecrire_questions(tmp_path, [question_legitime(), question_legitime()]))
