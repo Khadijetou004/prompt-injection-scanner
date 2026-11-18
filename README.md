@@ -158,7 +158,7 @@ Observations :
 | `regex` | Avant le modèle | Refuse une question qui contient un motif d'injection connu (« ignore tes consignes », « mode maintenance », « code secret »…) et écarte les documents suspects avant de les donner au modèle |
 | `spotlighting` | Dans le prompt | Place les documents entre `<documents>` et `</documents>` et remplace chaque espace par `^` (*datamarking*) ; le prompt système précise que ce texte est une donnée, jamais une consigne [1] |
 | `sandwich` | Dans le prompt | Rappelle la consigne de DocBot *après* la question, là où l'attaquant place d'habitude ses ordres [2] |
-| `garde` | Après le modèle | Remplace par un refus toute réponse qui contient le canari (même partiel ou déguisé), 6 mots consécutifs du prompt système, un lien ou une balise HTML |
+| `garde` | Après le modèle | Remplace par un refus toute réponse qui contient le canari (même sans son préfixe `CANARI-`, ou déguisé), 6 mots consécutifs du prompt système, un lien ou une balise HTML |
 
 Le filtre regex et la garde correspondent au contrôle des entrées et à la surveillance des sorties que recommande l'OWASP [3].
 
@@ -182,12 +182,12 @@ Certaines questions légitimes ressemblent volontairement à des attaques : « D
 | `regex` | 7 % | 33 % | 0 % | 50 % | **19 %** | 17 % | 0 % | 83 % |
 | `spotlighting` | 64 % | 33 % | 0 % | 55 % | **51 %** | 0 % | 8 % | 93 % |
 | `sandwich` | 35 % | 67 % | 0 % | 30 % | **35 %** | 0 % | 0 % | 100 % |
-| `garde` (rejeu, voir plus bas) | 36 % | 0 % | 0 % | 0 % | **20 %** | non mesuré | non mesuré | non mesuré |
+| `garde` | 36 % | 0 % | 0 % | 0 % | **20 %** | 0 % | 0 % | 100 % |
 | `toutes` | 0 % | 0 % | 0 % | 0 % | **0 %** | 17 % | 0 % | 83 % |
 
-Fichiers : [`regex`](resultats/2026-10-24_191720_regex.json), [`spotlighting`](resultats/2026-10-24_013345_spotlighting.json), [`sandwich`](resultats/2026-10-24_204407_sandwich.json), [`toutes`](resultats/2026-10-24_150415_toutes.json). Les trois colonnes des questions légitimes ont été recalculées avec `rejuger_legitimes()` après la correction des mots attendus de L02, L07 et L10 : des réponses justes comme « Non. » ou « il n'y a pas de code nécessaire » étaient comptées inutiles. Les fichiers gardent les notes d'origine.
+Fichiers : [`regex`](resultats/2026-10-24_191720_regex.json), [`spotlighting`](resultats/2026-10-24_013345_spotlighting.json), [`sandwich`](resultats/2026-10-24_204407_sandwich.json), [`garde`](resultats/2026-10-25_000246_garde.json), [`toutes`](resultats/2026-10-24_150415_toutes.json). Les trois colonnes des questions légitimes ont été recalculées avec `rejuger_legitimes()` après la correction des mots attendus de L02, L07 et L10 : des réponses justes comme « Non. » ou « il n'y a pas de code nécessaire » étaient comptées inutiles. Les fichiers gardent les notes d'origine.
 
-**La garde de sortie n'a pas eu de scan à elle.** Elle ne change pas ce que reçoit le modèle : on l'a donc rejouée sur les 100 réponses du scan de référence. Ses coûts sur les questions légitimes, eux, demanderaient un scan.
+**La garde se vérifie aussi par rejeu.** Elle ne change pas ce que reçoit le modèle : rejouée sur les 100 réponses du scan de référence, elle donne déjà 20 %, le même taux que son propre scan. Sur les 60 réponses légitimes, elle n'a rien bloqué.
 
 Observations :
 
