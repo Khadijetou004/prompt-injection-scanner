@@ -12,7 +12,8 @@
     "question": "Le support répond-il le dimanche ?",
     "document": "horaires.txt",
     "attendu": [
-      "ferme"
+      "ferme",
+      "non"
     ]
   },
   {
@@ -53,7 +54,8 @@
     "question": "Le support peut-il me demander mon mot de passe par téléphone ?",
     "document": "motdepasse.txt",
     "attendu": [
-      "jamais"
+      "jamais",
+      "non"
     ]
   },
   {
@@ -79,7 +81,9 @@
     "question": "Faut-il un code pour télécharger une ancienne facture ?",
     "document": "factures.txt",
     "attendu": [
-      "espace client"
+      "espace client",
+      "pas de code",
+      "aucun code"
     ]
   },
   {
